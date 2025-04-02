@@ -169,71 +169,69 @@ try {
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     }
     
-    # Step 2: Clone SecurePulse repository
+    # Step 2: Download or update SecurePulse files
     Write-Host "Step 2: Downloading SecurePulse..." -ForegroundColor Cyan
     Push-Location $InstallPath
     
-    if (Test-Path -Path ".git") {
-        Write-Host "Updating existing repository..." -ForegroundColor Cyan
-        git pull origin $Branch
+    # Always use direct HTTP download to avoid git issues
+    Write-Host "Downloading files directly from GitHub..." -ForegroundColor Cyan
+    
+    # Create directory structure
+    $sourceDirs = @(
+        "reporting_engine",
+        "reporting_engine/templates",
+        "reporting_engine/charts",
+        "verified_scan",
+        "verified_scan/drift",
+        "reports"
+    )
+    
+    foreach ($dir in $sourceDirs) {
+        $dirPath = "$InstallPath\$($dir.Replace('/', '\'))"
+        if (-not (Test-Path -Path $dirPath)) {
+            Write-Host "Creating directory: $dirPath" -ForegroundColor Cyan
+            New-Item -Path $dirPath -ItemType Directory -Force | Out-Null
+        }
     }
-    else {
-        Write-Host "Cloning repository from GitHub..." -ForegroundColor Cyan
-        git clone --branch $Branch --depth 1 https://github.com/tier3tech/SecurePulse.git .
+    
+    # Download key files
+    try {
+        $baseUrl = "https://raw.githubusercontent.com/tier3tech/SecurePulse/$Branch"
         
-        if (-not $?) {
-            Write-Host "Warning: Git clone failed. Attempting to download using direct HTTP..." -ForegroundColor Yellow
+        $filesToDownload = @(
+            "requirements.txt",
+            "generate_report.py",
+            "import_scuba_results.py",
+            "run_verified_modules.py",
+            "reporting_engine/report_generator.py",
+            "reporting_engine/__init__.py",
+            "reporting_engine/templates/report.html.j2"
+        )
+        
+        foreach ($file in $filesToDownload) {
+            $url = "$baseUrl/$file"
+            $outputFile = "$InstallPath\$($file.Replace('/', '\'))"
+            $outputDir = Split-Path -Parent $outputFile
             
-            # Create minimal directory structure if git clone fails
-            $sourceDirs = @(
-                "reporting_engine",
-                "reporting_engine/templates",
-                "reporting_engine/charts",
-                "verified_scan",
-                "verified_scan/drift"
-            )
-            
-            foreach ($dir in $sourceDirs) {
-                if (-not (Test-Path -Path "$InstallPath\$dir")) {
-                    New-Item -Path "$InstallPath\$dir" -ItemType Directory -Force | Out-Null
-                }
+            if (-not (Test-Path -Path $outputDir)) {
+                New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
             }
             
-            # Download key files directly if needed
+            Write-Host "Downloading $file..." -ForegroundColor Cyan
             try {
-                $baseUrl = "https://raw.githubusercontent.com/tier3tech/SecurePulse/$Branch"
-                
-                $filesToDownload = @(
-                    "requirements.txt",
-                    "generate_report.py",
-                    "import_scuba_results.py",
-                    "run_verified_modules.py",
-                    "reporting_engine/report_generator.py",
-                    "reporting_engine/__init__.py",
-                    "reporting_engine/templates/report.html.j2",
-                    "windows-installer/Install-SecurePulse.ps1"
-                )
-                
-                foreach ($file in $filesToDownload) {
-                    $url = "$baseUrl/$file"
-                    $outputFile = "$InstallPath\$file"
-                    $outputDir = Split-Path -Parent $outputFile
-                    
-                    if (-not (Test-Path -Path $outputDir)) {
-                        New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
-                    }
-                    
-                    Write-Host "Downloading $file..." -ForegroundColor Cyan
-                    Invoke-WebRequest -Uri $url -OutFile $outputFile -UseBasicParsing
-                }
-                
-                Write-Host "Essential files downloaded successfully" -ForegroundColor Green
+                Invoke-WebRequest -Uri $url -OutFile $outputFile -UseBasicParsing -ErrorAction Stop
             }
             catch {
-                Write-Host "Error downloading files: $_" -ForegroundColor Red
-                Write-Host "Will proceed with minimal functionality" -ForegroundColor Yellow
+                Write-Host "Warning: Could not download $file from $url : $_" -ForegroundColor Yellow
+                # Continue with other files
             }
         }
+        
+        Write-Host "Essential files downloaded successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error during download process: $_" -ForegroundColor Red
+        Write-Host "Will proceed with minimal functionality" -ForegroundColor Yellow
     }
     
     # Step 3: Create and setup Python virtual environment
@@ -292,8 +290,27 @@ markdown>=3.4.0
         
         Write-Host "Initializing SCuBA..." -ForegroundColor Cyan
         try {
-            Import-Module ScubaGear
-            Initialize-SCuBA
+            # Import and initialize SCuBA with more robust handling
+            if (Get-Module -ListAvailable -Name ScubaGear) {
+                Import-Module ScubaGear -Force
+                
+                # Check for ScuBA initialization command
+                if (Get-Command -Name Initialize-SCuBA -ErrorAction SilentlyContinue) {
+                    Initialize-SCuBA
+                    Write-Host "SCuBA initialized successfully" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "Warning: Initialize-SCuBA command not found" -ForegroundColor Yellow
+                    Write-Host "After installation is complete, run 'Import-Module ScubaGear' and then 'Initialize-SCuBA' manually" -ForegroundColor Yellow
+                }
+            }
+            else {
+                Write-Host "Warning: ScubaGear module not found after installation" -ForegroundColor Yellow
+                Write-Host "Please try installing SCuBA manually after this installation is complete:" -ForegroundColor Yellow
+                Write-Host "  Install-Module -Name ScubaGear -Force -Scope CurrentUser" -ForegroundColor Yellow
+                Write-Host "  Import-Module ScubaGear" -ForegroundColor Yellow
+                Write-Host "  Initialize-SCuBA" -ForegroundColor Yellow
+            }
         }
         catch {
             Write-Host "Warning: Error during SCuBA initialization: $_" -ForegroundColor Yellow
@@ -461,14 +478,21 @@ if __name__ == "__main__":
     # Step 6: Create desktop shortcuts
     Write-Host "Step 6: Creating shortcuts..." -ForegroundColor Cyan
     
-    $WshShell = New-Object -ComObject WScript.Shell
-    $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\SecurePulse.lnk")
-    $Shortcut.TargetPath = "powershell.exe"
-    $Shortcut.Arguments = "-ExecutionPolicy Bypass -File `"$securityAssessmentScript`""
-    $Shortcut.WorkingDirectory = $InstallPath
-    $Shortcut.IconLocation = "powershell.exe,0"
-    $Shortcut.Description = "Run SecurePulse Security Assessment"
-    $Shortcut.Save()
+    try {
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\SecurePulse.lnk")
+        $Shortcut.TargetPath = "powershell.exe"
+        $Shortcut.Arguments = "-ExecutionPolicy Bypass -File `"$securityAssessmentScript`""
+        $Shortcut.WorkingDirectory = $InstallPath
+        $Shortcut.IconLocation = "powershell.exe,0"
+        $Shortcut.Description = "Run SecurePulse Security Assessment"
+        $Shortcut.Save()
+        Write-Host "Desktop shortcut created successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Warning: Could not create desktop shortcut: $_" -ForegroundColor Yellow
+        Write-Host "You can still run the assessment script manually from: $securityAssessmentScript" -ForegroundColor Yellow
+    }
     
     # Step 7: Create README file
     Write-Host "Step 7: Creating documentation..." -ForegroundColor Cyan
