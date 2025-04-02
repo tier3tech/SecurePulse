@@ -173,314 +173,68 @@ try {
     Write-Host "Step 2: Downloading SecurePulse..." -ForegroundColor Cyan
     Push-Location $InstallPath
     
-    # Copy files instead of git clone until repo is ready
-    Write-Host "Copying files to installation directory..." -ForegroundColor Cyan
-    
-    # Create source files structure for testing
-    $sourceDirs = @(
-        "reporting_engine",
-        "reporting_engine/templates",
-        "reporting_engine/charts",
-        "verified_scan",
-        "verified_scan/drift"
-    )
-    
-    foreach ($dir in $sourceDirs) {
-        if (-not (Test-Path -Path "$InstallPath\$dir")) {
-            New-Item -Path "$InstallPath\$dir" -ItemType Directory -Force | Out-Null
+    if (Test-Path -Path ".git") {
+        Write-Host "Updating existing repository..." -ForegroundColor Cyan
+        git pull origin $Branch
+    }
+    else {
+        Write-Host "Cloning repository from GitHub..." -ForegroundColor Cyan
+        git clone --branch $Branch --depth 1 https://github.com/tier3tech/SecurePulse.git .
+        
+        if (-not $?) {
+            Write-Host "Warning: Git clone failed. Attempting to download using direct HTTP..." -ForegroundColor Yellow
+            
+            # Create minimal directory structure if git clone fails
+            $sourceDirs = @(
+                "reporting_engine",
+                "reporting_engine/templates",
+                "reporting_engine/charts",
+                "verified_scan",
+                "verified_scan/drift"
+            )
+            
+            foreach ($dir in $sourceDirs) {
+                if (-not (Test-Path -Path "$InstallPath\$dir")) {
+                    New-Item -Path "$InstallPath\$dir" -ItemType Directory -Force | Out-Null
+                }
+            }
+            
+            # Download key files directly if needed
+            try {
+                $baseUrl = "https://raw.githubusercontent.com/tier3tech/SecurePulse/$Branch"
+                
+                $filesToDownload = @(
+                    "requirements.txt",
+                    "generate_report.py",
+                    "import_scuba_results.py",
+                    "run_verified_modules.py",
+                    "reporting_engine/report_generator.py",
+                    "reporting_engine/__init__.py",
+                    "reporting_engine/templates/report.html.j2",
+                    "windows-installer/Install-SecurePulse.ps1"
+                )
+                
+                foreach ($file in $filesToDownload) {
+                    $url = "$baseUrl/$file"
+                    $outputFile = "$InstallPath\$file"
+                    $outputDir = Split-Path -Parent $outputFile
+                    
+                    if (-not (Test-Path -Path $outputDir)) {
+                        New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
+                    }
+                    
+                    Write-Host "Downloading $file..." -ForegroundColor Cyan
+                    Invoke-WebRequest -Uri $url -OutFile $outputFile -UseBasicParsing
+                }
+                
+                Write-Host "Essential files downloaded successfully" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "Error downloading files: $_" -ForegroundColor Red
+                Write-Host "Will proceed with minimal functionality" -ForegroundColor Yellow
+            }
         }
     }
-    
-    # Create placeholder requirements.txt
-    $requirementsContent = @"
-# Core requirements
-requests>=2.28.0
-msal>=1.20.0
-pandas>=1.5.0
-matplotlib>=3.6.0
-
-# Reporting
-jinja2>=3.1.2
-markdown>=3.4.0
-
-# Vector database and embeddings
-sentence-transformers>=2.2.2
-chromadb>=0.4.15
-numpy>=1.23.0
-
-# Baseline handling
-pyyaml>=6.0
-jsonschema>=4.17.0
-
-# Date handling
-python-dateutil>=2.8.2
-
-# Utilities
-tqdm>=4.64.0
-colorlog>=6.7.0
-"@
-    
-    Set-Content -Path "$InstallPath\requirements.txt" -Value $requirementsContent
-    
-    # Create HTML template
-    $htmlTemplateContent = @"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ tenant_name }} - Security Report</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            border-bottom: 2px solid #2c3e50;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        h1, h2, h3 {
-            color: #2c3e50;
-        }
-        .summary {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .metrics {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .metric-card {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            flex: 1;
-            min-width: 200px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f1f1f1;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 12px;
-            color: #7f8c8d;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Security Assessment Report</h1>
-        <p>Generated on {{ report_date }}</p>
-    </div>
-    
-    <div class="summary">
-        <h2>Executive Summary</h2>
-        <p>{{ summary_text }}</p>
-    </div>
-    
-    <h2>Key Metrics</h2>
-    <div class="metrics">
-        {% for metric in key_metrics %}
-        <div class="metric-card">
-            <div>{{ metric.name }}</div>
-            <div class="metric-value" style="color: {{ metric.color }}">{{ metric.value }}</div>
-            <div>{{ metric.description }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <h2>Security Findings</h2>
-    <table>
-        <tr>
-            <th>Category</th>
-            <th>Finding</th>
-            <th>Severity</th>
-            <th>Recommendation</th>
-        </tr>
-        {% for finding in findings %}
-        <tr>
-            <td>{{ finding.category }}</td>
-            <td>{{ finding.title }}</td>
-            <td>{{ finding.severity }}</td>
-            <td>{{ finding.recommendation }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    
-    <div class="footer">
-        <p>Generated by SecurePulse - © {{ current_year }}</p>
-    </div>
-</body>
-</html>
-"@
-    
-    Set-Content -Path "$InstallPath\reporting_engine\templates\report.html.j2" -Value $htmlTemplateContent
-    
-    # Create placeholder report generator
-    $reportGeneratorContent = @"
-#!/usr/bin/env python3
-"""
-Report generator module for SecurePulse
-"""
-
-import os
-import json
-import datetime
-
-class ReportGenerator:
-    """
-    Generates comprehensive security reports from assessment data
-    """
-    
-    def __init__(self):
-        """
-        Initialize the report generator
-        """
-        self.templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
-        self.charts_dir = os.path.join(os.path.dirname(__file__), 'charts')
-        os.makedirs(self.charts_dir, exist_ok=True)
-    
-    def generate_report(self, drift_report, access_report, license_report, tenant_id, output_path, format='html'):
-        """
-        Generate a security report from assessment data
-        
-        Args:
-            drift_report: Configuration drift assessment results
-            access_report: Access analysis results
-            license_report: License optimization results
-            tenant_id: Microsoft 365 tenant ID
-            output_path: Path to save the report
-            format: Report format (html, md, or pdf)
-        
-        Returns:
-            Path to the generated report
-        """
-        # Create placeholder report
-        with open(output_path, 'w') as f:
-            f.write(f'''
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Security Assessment Report</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; }}
-        h1, h2, h3 {{ color: #2c3e50; }}
-    </style>
-</head>
-<body>
-    <h1>Security Assessment Report</h1>
-    <p>Generated on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    
-    <h2>Executive Summary</h2>
-    <p>This report contains a security assessment of your Microsoft 365 tenant.</p>
-    
-    <h2>Tenant Information</h2>
-    <p>Tenant ID: {tenant_id}</p>
-    
-    <h2>Security Findings</h2>
-    <p>This is a placeholder report. In a real assessment, detailed findings would be shown here.</p>
-    
-    <footer>
-        <p>Generated by SecurePulse</p>
-    </footer>
-</body>
-</html>
-            ''')
-        
-        print(f"Report generated: {output_path}")
-        return output_path
-"@
-    
-    Set-Content -Path "$InstallPath\reporting_engine\report_generator.py" -Value $reportGeneratorContent
-    
-    # Create __init__.py files
-    Set-Content -Path "$InstallPath\reporting_engine\__init__.py" -Value ""
-    
-    # Create placeholder generate_report.py
-    $generateReportContent = @"
-#!/usr/bin/env python3
-"""
-Generate a comprehensive HTML report from the latest verified scan results
-"""
-
-import os
-import json
-import datetime
-import sys
-from pathlib import Path
-
-# Import reporting engine
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from reporting_engine.report_generator import ReportGenerator
-
-def generate_html_report(results_file=None):
-    """
-    Generate an HTML report from the latest verified scan results
-    
-    Args:
-        results_file: Path to the specific results file to use. If None, uses the latest one.
-    """
-    # Create report directory
-    reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
-    os.makedirs(reports_dir, exist_ok=True)
-    
-    # Generate the HTML report
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = os.path.join(reports_dir, f"comprehensive_report_{timestamp}.html")
-    
-    # Initialize the report generator
-    report_generator = ReportGenerator()
-    
-    # Generate placeholder report
-    report_generator.generate_report(
-        drift_report={},
-        access_report={},
-        license_report={},
-        tenant_id="placeholder-tenant-id",
-        output_path=output_path,
-        format='html'
-    )
-    
-    print(f"HTML report generated: {output_path}")
-    return output_path
-
-if __name__ == "__main__":
-    report_path = generate_html_report()
-    if report_path:
-        print(f"Report successfully generated at: {report_path}")
-        print(f"Open this file in a web browser to view the report.")
-"@
-    
-    Set-Content -Path "$InstallPath\generate_report.py" -Value $generateReportContent
     
     # Step 3: Create and setup Python virtual environment
     Write-Host "Step 3: Setting up Python environment..." -ForegroundColor Cyan
