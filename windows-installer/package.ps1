@@ -78,6 +78,44 @@ if %errorLevel% neq 0 (
     exit /b 1
 )
 
+:: Parse command line arguments
+set INSTALL_ARGS=
+set SILENT_MODE=false
+
+:parse_args
+if "%~1"=="" goto end_parse_args
+if /i "%~1"=="-Silent" (
+    set SILENT_MODE=true
+    shift
+    goto parse_args
+)
+if /i "%~1"=="-InstallPath" (
+    set INSTALL_ARGS=%INSTALL_ARGS% -InstallPath "%~2"
+    shift
+    shift
+    goto parse_args
+)
+if /i "%~1"=="-InstallScuba" (
+    set INSTALL_ARGS=%INSTALL_ARGS% -InstallScuba
+    shift
+    goto parse_args
+)
+if /i "%~1"=="-SkipPython" (
+    set INSTALL_ARGS=%INSTALL_ARGS% -SkipPython
+    shift
+    goto parse_args
+)
+if /i "%~1"=="-Branch" (
+    set INSTALL_ARGS=%INSTALL_ARGS% -Branch "%~2"
+    shift
+    shift
+    goto parse_args
+)
+set INSTALL_ARGS=%INSTALL_ARGS% %1
+shift
+goto parse_args
+:end_parse_args
+
 :: Create temporary directory
 set TEMP_DIR=%TEMP%\SecurePulse_Install
 mkdir "%TEMP_DIR%" 2>nul
@@ -88,14 +126,18 @@ copy "%~dp0Install-SecurePulse.ps1" "%TEMP_DIR%\"
 
 :: Run PowerShell installer
 echo Starting installation...
-powershell.exe -ExecutionPolicy Bypass -File "%TEMP_DIR%\Install-SecurePulse.ps1"
+if "%SILENT_MODE%"=="true" (
+    powershell.exe -ExecutionPolicy Bypass -Command "& '%TEMP_DIR%\Install-SecurePulse.ps1' %INSTALL_ARGS%"
+) else (
+    powershell.exe -ExecutionPolicy Bypass -File "%TEMP_DIR%\Install-SecurePulse.ps1" %INSTALL_ARGS%
+)
 
 :: Check for errors
 if %errorLevel% neq 0 (
     echo.
     echo Installation failed. Please check the logs for more information.
     echo.
-    pause
+    if "%SILENT_MODE%"=="false" pause
     exit /b 1
 )
 
@@ -105,7 +147,7 @@ rmdir /s /q "%TEMP_DIR%" 2>nul
 echo.
 echo Installation completed successfully!
 echo.
-pause
+if "%SILENT_MODE%"=="false" pause
 exit /b 0
 '@
 

@@ -8,7 +8,8 @@ This directory contains the Windows installer for SecurePulse, a comprehensive s
 - Optional SCuBA (Secure Cloud Business Applications) integration
 - Python virtual environment setup
 - PowerShell wrapper scripts
-- Desktop shortcuts for easy access
+- Multiple launch options (Start Menu, desktop shortcuts, batch file)
+- Robust error handling and fallback mechanisms
 
 ## Installation Instructions
 
@@ -34,18 +35,34 @@ With SCuBA integration:
 .\Install-SecurePulse.ps1 -InstallScuba
 ```
 
-## Usage
-
-After installation, you can run SecurePulse in two ways:
-
-1. Use the desktop shortcut 
-2. Run the security assessment script directly:
+Custom installation path:
 
 ```powershell
-%USERPROFILE%\SecurePulse\Run-SecurityAssessment.ps1 -TenantId "your-tenant-id" -ClientId "your-client-id" -ClientSecret "your-client-secret"
+.\Install-SecurePulse.ps1 -InstallPath "C:\SecurePulse"
 ```
 
-To include SCuBA assessment:
+Silent installation (for automation):
+
+```powershell
+.\Install-SecurePulse.ps1 -InstallPath "C:\SecurePulse" -InstallScuba
+```
+
+## Usage
+
+After installation, you can run SecurePulse in multiple ways:
+
+1. **Start Menu**: Go to Start Menu > Programs > SecurePulse > SecurePulse Assessment
+2. **Desktop Shortcut**: Use the desktop shortcut (if created successfully)
+3. **Batch File**: Run the batch file directly:
+   ```
+   %USERPROFILE%\SecurePulse\Run-SecurePulse.bat
+   ```
+4. **PowerShell Script**: Run the script directly with parameters:
+   ```powershell
+   %USERPROFILE%\SecurePulse\Run-SecurityAssessment.ps1 -TenantId "your-tenant-id" -ClientId "your-client-id" -ClientSecret "your-client-secret"
+   ```
+
+To include SCuBA assessment, add the `-UseScuba` parameter:
 
 ```powershell
 %USERPROFILE%\SecurePulse\Run-SecurityAssessment.ps1 -TenantId "your-tenant-id" -ClientId "your-client-id" -ClientSecret "your-client-secret" -UseScuba
@@ -93,10 +110,27 @@ This allows you to run both SecurePulse and SCuBA assessments with a single comm
 To uninstall SecurePulse:
 
 1. Remove the installation directory (default: `%USERPROFILE%\SecurePulse`)
-2. Remove the desktop shortcut
+2. Remove the desktop shortcut (if created)
+3. Remove the Start Menu folder: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\SecurePulse`
 
 If you installed SCuBA:
 
 ```powershell
 Uninstall-Module -Name ScubaGear -Force
+```
+
+## Silent Installation
+
+For automated deployment, you can run the installer silently:
+
+```batch
+SecurePulse-Setup.exe -Silent -InstallPath "C:\SecurePulse" -InstallScuba
+```
+
+Command-line parameters:
+- `-Silent`: Runs the installer without user interaction
+- `-InstallPath`: Specifies the installation directory
+- `-InstallScuba`: Installs SCuBA integration
+- `-SkipPython`: Skips Python installation (if already installed)
+- `-Branch`: Specifies the GitHub branch to use (default: main)
 ```
