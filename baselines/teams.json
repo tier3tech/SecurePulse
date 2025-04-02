@@ -1,0 +1,63 @@
+{
+    "name": "Microsoft Teams",
+    "version": "1.0.0",
+    "source": "CISA SCuBA",
+    "requirements": [
+        {
+            "id": "MS.TEAMS.1.1v1",
+            "name": "External access should be restricted",
+            "description": "Restrict Teams federation with external organizations",
+            "severity": "Medium",
+            "category": "External Access",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.1.2v1",
+            "name": "Guest access should be managed securely",
+            "description": "Configure guest access settings to limit guest capabilities",
+            "severity": "Medium",
+            "category": "External Access",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.2.1v1",
+            "name": "Teams messaging policies should be configured",
+            "description": "Configure messaging policies to control chat and channel features",
+            "severity": "Low",
+            "category": "Communication",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.2.2v1",
+            "name": "Teams meeting policies should be configured",
+            "description": "Configure meeting policies to control meeting features and security",
+            "severity": "Medium",
+            "category": "Meetings",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.2.3v1",
+            "name": "App permission policies should be configured",
+            "description": "Control which apps users can install and use in Teams",
+            "severity": "Medium",
+            "category": "Applications",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.3.1v1",
+            "name": "Sensitivity labels should be used for Teams",
+            "description": "Use sensitivity labels to protect Teams content",
+            "severity": "Medium",
+            "category": "Data Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.TEAMS.3.2v1",
+            "name": "Retention policies should be configured for Teams",
+            "description": "Configure retention policies for Teams chat and channel messages",
+            "severity": "Medium",
+            "category": "Data Management",
+            "baseline": true
+        }
+    ]
+}

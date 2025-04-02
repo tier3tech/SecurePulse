@@ -1,0 +1,79 @@
+{
+    "name": "Microsoft Entra ID",
+    "version": "1.0.0",
+    "source": "CISA SCuBA",
+    "requirements": [
+        {
+            "id": "MS.AAD.1.1v1",
+            "name": "Conditional Access policies should block legacy authentication",
+            "description": "Block legacy authentication protocols to prevent attacks that leverage legacy authentication",
+            "severity": "High",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.1.2v1",
+            "name": "Conditional Access policies should require MFA for administrators",
+            "description": "MFA should be required for all administrative roles",
+            "severity": "Critical",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.1.3v1",
+            "name": "Conditional Access policies should require MFA for all users",
+            "description": "MFA should be required for all users",
+            "severity": "High",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.2.1v1",
+            "name": "Security defaults should be enabled if Conditional Access is not used",
+            "description": "Security defaults provide basic security features at no additional cost",
+            "severity": "High",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.3.1v1",
+            "name": "External users should be reviewed regularly",
+            "description": "External user access should be periodically reviewed",
+            "severity": "Medium",
+            "category": "Access Control",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.3.2v1",
+            "name": "External collaboration settings should be configured securely",
+            "description": "Control how users use Azure AD B2B collaboration",
+            "severity": "Medium",
+            "category": "Access Control",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.3.3v1",
+            "name": "User consent to apps should be restricted",
+            "description": "Restrict user consent to apps to prevent data exfiltration",
+            "severity": "Medium",
+            "category": "Access Control",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.4.1v1",
+            "name": "Allow users to sign in with password reset",
+            "description": "Allow users to reset passwords without contacting administrator",
+            "severity": "Low",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.AAD.4.2v1",
+            "name": "Enable self-service password reset",
+            "description": "Configure self-service password reset for all users",
+            "severity": "Low",
+            "category": "Authentication",
+            "baseline": true
+        }
+    ]
+}

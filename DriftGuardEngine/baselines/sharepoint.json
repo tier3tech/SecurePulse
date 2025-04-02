@@ -1,0 +1,55 @@
+{
+    "name": "SharePoint Online",
+    "version": "1.0.0",
+    "source": "CISA SCuBA",
+    "requirements": [
+        {
+            "id": "MS.SHAREPOINT.1.1v1",
+            "name": "External sharing should be restricted",
+            "description": "Limit external sharing to reduce data exposure risks",
+            "severity": "High",
+            "category": "Sharing",
+            "baseline": true
+        },
+        {
+            "id": "MS.SHAREPOINT.1.2v1",
+            "name": "Sharing links should expire and require authentication",
+            "description": "Configure sharing links to expire and require user authentication",
+            "severity": "Medium",
+            "category": "Sharing",
+            "baseline": true
+        },
+        {
+            "id": "MS.SHAREPOINT.2.1v1",
+            "name": "Idle session timeout should be enabled",
+            "description": "Configure idle session timeout to automatically sign out inactive users",
+            "severity": "Medium",
+            "category": "Access Control",
+            "baseline": true
+        },
+        {
+            "id": "MS.SHAREPOINT.2.2v1",
+            "name": "Legacy authentication protocols should be disabled",
+            "description": "Block legacy authentication protocols to prevent attacks",
+            "severity": "High",
+            "category": "Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.SHAREPOINT.3.1v1",
+            "name": "Data Loss Prevention (DLP) policies should be configured",
+            "description": "Configure DLP policies to protect sensitive information",
+            "severity": "Medium",
+            "category": "Data Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.SHAREPOINT.3.2v1",
+            "name": "Retention policies should be configured",
+            "description": "Configure retention policies to manage content lifecycle",
+            "severity": "Medium",
+            "category": "Data Management",
+            "baseline": true
+        }
+    ]
+}

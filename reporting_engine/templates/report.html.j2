@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tenant_name }} - Security Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .tenant-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .summary-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .chart-container {
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .chart-container img, .chart-container iframe {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .no-chart-placeholder {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            font-style: italic;
+            border-radius: 4px;
+        }
+        .actions-section {
+            margin: 30px 0;
+        }
+        .action-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 5px 5px 0;
+        }
+        .action-item.high {
+            border-left-color: #e74c3c;
+        }
+        .action-item.medium {
+            border-left-color: #f39c12;
+        }
+        .action-item.low {
+            border-left-color: #2ecc71;
+        }
+        .action-header {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+        .priority-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .priority-high {
+            background-color: #e74c3c;
+        }
+        .priority-medium {
+            background-color: #f39c12;
+        }
+        .priority-low {
+            background-color: #2ecc71;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .progress-section {
+            margin: 30px 0;
+        }
+        .progress-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #2ecc71;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 5px 5px 0;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Security Assessment Report</h1>
+        <p>Generated on {{ report_date }}</p>
+    </div>
+    
+    <div class="tenant-info">
+        <h2>{{ tenant_name }}</h2>
+        <p>Tenant ID: {{ tenant_id }}</p>
+        <p>This report provides an analysis of your Microsoft 365 security posture based on the latest scan results.</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Executive Summary</div>
+        <p>{{ summary_text }}</p>
+        
+        <div class="summary-metrics">
+            {% for metric in key_metrics %}
+            <div class="metric-card">
+                <div class="metric-title">{{ metric.name }}</div>
+                <div class="metric-value" style="color: {{ metric.color }}">{{ metric.value }}</div>
+                <div class="metric-description">{{ metric.description }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    {% if has_comparison %}
+    <div class="section">
+        <div class="section-title">Progress Since Last Scan</div>
+        <div class="chart-container">
+            {% if progress_chart_path and progress_chart_path.endswith('.html') %}
+            <iframe src="{{ progress_chart_path }}" width="100%" height="500" frameborder="0"></iframe>
+            {% elif progress_chart_path %}
+            <img src="{{ progress_chart_path }}" alt="Progress Chart">
+            {% else %}
+            <div class="no-chart-placeholder">Chart data not available</div>
+            {% endif %}
+        </div>
+        
+        <div class="progress-section">
+            <h3>Resolved Issues ({{ resolved_count }})</h3>
+            {% for item in resolved_items %}
+            <div class="progress-item">
+                <div class="action-header">{{ item.title }}</div>
+                <p>{{ item.description }}</p>
+            </div>
+            {% endfor %}
+            
+            <h3>New Issues ({{ new_count }})</h3>
+            {% for item in new_items %}
+            <div class="action-item {{ item.severity|lower }}">
+                <div class="action-header">
+                    {{ item.title }}
+                    <span class="priority-tag priority-{{ item.severity|lower }}">{{ item.severity }}</span>
+                </div>
+                <p>{{ item.description }}</p>
+                <p><strong>Recommendation:</strong> {{ item.recommendation }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="section">
+        <div class="section-title">Priority Actions</div>
+        <div class="actions-section">
+            {% for action in priority_actions %}
+            <div class="action-item {{ action.severity|lower }}">
+                <div class="action-header">
+                    {{ action.title }}
+                    <span class="priority-tag priority-{{ action.severity|lower }}">{{ action.severity }}</span>
+                </div>
+                <p>{{ action.description }}</p>
+                <p><strong>Recommendation:</strong> {{ action.recommendation }}</p>
+                {% if action.impact %}
+                <p><strong>Impact:</strong> {{ action.impact }}</p>
+                {% endif %}
+                {% if action.effort %}
+                <p><strong>Effort:</strong> {{ action.effort }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    {% if drift_summary %}
+    <div class="section">
+        <div class="section-title">Configuration Drift Analysis</div>
+        <div class="chart-container">
+            {% if drift_chart_path and drift_chart_path.endswith('.html') %}
+            <iframe src="{{ drift_chart_path }}" width="100%" height="500" frameborder="0"></iframe>
+            {% elif drift_chart_path %}
+            <img src="{{ drift_chart_path }}" alt="Configuration Drift Chart">
+            {% else %}
+            <div class="no-chart-placeholder">Chart data not available</div>
+            {% endif %}
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Workload</th>
+                    <th>Compliance Score</th>
+                    <th>Requirements</th>
+                    <th>Compliant</th>
+                    <th>Non-Compliant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for workload in drift_summary %}
+                <tr>
+                    <td>{{ workload.name }}</td>
+                    <td>{{ workload.score }}%</td>
+                    <td>{{ workload.total }}</td>
+                    <td>{{ workload.compliant }}</td>
+                    <td>{{ workload.non_compliant }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if access_summary %}
+    <div class="section">
+        <div class="section-title">Identity & Access Analysis</div>
+        <div class="chart-container">
+            {% if access_chart_path and access_chart_path.endswith('.html') %}
+            <iframe src="{{ access_chart_path }}" width="100%" height="500" frameborder="0"></iframe>
+            {% elif access_chart_path %}
+            <img src="{{ access_chart_path }}" alt="MFA Adoption Chart">
+            {% else %}
+            <div class="no-chart-placeholder">Chart data not available</div>
+            {% endif %}
+        </div>
+        
+        <div class="summary-metrics">
+            <div class="metric-card">
+                <div class="metric-title">MFA Adoption</div>
+                <div class="metric-value" style="color: {{ access_summary.mfa_color }}">{{ access_summary.mfa_adoption_rate }}%</div>
+                <div class="metric-description">of users have MFA enabled</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Admin MFA Adoption</div>
+                <div class="metric-value" style="color: {{ access_summary.admin_mfa_color }}">{{ access_summary.admin_mfa_rate }}%</div>
+                <div class="metric-description">of admins have MFA enabled</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">At-Risk Users</div>
+                <div class="metric-value" style="color: {{ access_summary.risk_color }}">{{ access_summary.at_risk_count }}</div>
+                <div class="metric-description">users without MFA</div>
+            </div>
+        </div>
+        
+        {% if access_summary.admin_risk_count > 0 %}
+        <div class="action-item high">
+            <div class="action-header">
+                Administrators Without MFA
+                <span class="priority-tag priority-high">Critical</span>
+            </div>
+            <p>{{ access_summary.admin_risk_count }} administrators do not have MFA enabled, creating a critical security risk.</p>
+            <p><strong>Recommendation:</strong> Immediately enable MFA for all administrators.</p>
+        </div>
+        {% endif %}
+        
+        {% if access_summary.ca_policy_gaps|length > 0 %}
+        <div class="action-item medium">
+            <div class="action-header">
+                Conditional Access Policy Gaps
+                <span class="priority-tag priority-medium">Medium</span>
+            </div>
+            <p>The following gaps were identified in your Conditional Access policies:</p>
+            <ul>
+                {% for gap in access_summary.ca_policy_gaps %}
+                <li>{{ gap }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if license_summary %}
+    <div class="section">
+        <div class="section-title">License Optimization</div>
+        <div class="chart-container">
+            {% if license_chart_path and license_chart_path.endswith('.html') %}
+            <iframe src="{{ license_chart_path }}" width="100%" height="500" frameborder="0"></iframe>
+            {% elif license_chart_path %}
+            <img src="{{ license_chart_path }}" alt="License Optimization Chart">
+            {% else %}
+            <div class="no-chart-placeholder">Chart data not available</div>
+            {% endif %}
+        </div>
+        
+        <div class="summary-metrics">
+            <div class="metric-card">
+                <div class="metric-title">Potential Savings</div>
+                <div class="metric-value" style="color: #2ecc71">${{ license_summary.total_savings }}</div>
+                <div class="metric-description">monthly cost savings identified</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Optimization Actions</div>
+                <div class="metric-value">{{ license_summary.recommendations|length }}</div>
+                <div class="metric-description">recommendations identified</div>
+            </div>
+        </div>
+        
+        {% for rec in license_summary.recommendations %}
+        <div class="action-item {{ rec.severity|lower }}">
+            <div class="action-header">
+                {{ rec.title }}
+                <span class="priority-tag priority-{{ rec.severity|lower }}">{{ rec.severity }}</span>
+            </div>
+            <p>{{ rec.description }}</p>
+            <p><strong>Impact:</strong> Potential savings of ${{ rec.savings }}/month.</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Generated by SecurePulse - © Open Door {{ current_year }}</p>
+    </div>
+</body>
+</html>

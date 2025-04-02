@@ -1,0 +1,55 @@
+{
+    "name": "Microsoft Defender for Office 365",
+    "version": "1.0.0",
+    "source": "CISA SCuBA",
+    "requirements": [
+        {
+            "id": "MS.DEFENDER.1.1v1",
+            "name": "Safe Attachments should be enabled",
+            "description": "Safe Attachments analyzes attachments for malicious content",
+            "severity": "High",
+            "category": "Malware Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.DEFENDER.1.2v1",
+            "name": "Safe Links should be enabled",
+            "description": "Safe Links provides time-of-click verification of URLs in emails and Office documents",
+            "severity": "High",
+            "category": "Phishing Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.DEFENDER.1.3v1",
+            "name": "Anti-phishing policies should be configured",
+            "description": "Anti-phishing protection detects attempts to impersonate users and domains",
+            "severity": "High",
+            "category": "Phishing Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.DEFENDER.1.4v1",
+            "name": "Anti-spam policies should be configured",
+            "description": "Configure anti-spam policies to filter spam and malicious emails",
+            "severity": "Medium",
+            "category": "Spam Protection",
+            "baseline": true
+        },
+        {
+            "id": "MS.DEFENDER.2.1v1",
+            "name": "Alert policies should be configured",
+            "description": "Configure alert policies to notify administrators of suspicious activities",
+            "severity": "Medium",
+            "category": "Monitoring",
+            "baseline": true
+        },
+        {
+            "id": "MS.DEFENDER.2.2v1",
+            "name": "Authorized sender lists should be regularly reviewed",
+            "description": "Review and maintain authorized sender lists to prevent spoofing",
+            "severity": "Medium",
+            "category": "Spam Protection",
+            "baseline": true
+        }
+    ]
+}

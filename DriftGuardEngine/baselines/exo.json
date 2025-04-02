@@ -1,0 +1,63 @@
+{
+    "name": "Exchange Online",
+    "version": "1.0.0",
+    "source": "CISA SCuBA",
+    "requirements": [
+        {
+            "id": "MS.EXO.1.1v1",
+            "name": "Sender Policy Framework (SPF) should be configured",
+            "description": "SPF helps prevent spoofing and phishing by authenticating sending mail servers",
+            "severity": "High",
+            "category": "Email Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.1.2v1",
+            "name": "DomainKeys Identified Mail (DKIM) should be enabled",
+            "description": "DKIM adds a digital signature to emails for authentication",
+            "severity": "High",
+            "category": "Email Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.1.3v1",
+            "name": "Domain-based Message Authentication, Reporting, and Conformance (DMARC) should be configured",
+            "description": "DMARC helps email receivers determine authenticity of emails",
+            "severity": "High",
+            "category": "Email Authentication",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.2.1v1",
+            "name": "Mailbox auditing should be enabled",
+            "description": "Enable auditing for all mailboxes to track access and changes",
+            "severity": "Medium",
+            "category": "Auditing",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.2.2v1",
+            "name": "Mailbox retention policies should be configured",
+            "description": "Configure retention policies to manage email lifecycle",
+            "severity": "Medium",
+            "category": "Data Management",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.3.1v1",
+            "name": "Remote domains should be configured securely",
+            "description": "Configure remote domains to control mail flow with external domains",
+            "severity": "Medium",
+            "category": "Mail Flow",
+            "baseline": true
+        },
+        {
+            "id": "MS.EXO.3.2v1",
+            "name": "Transport rules should filter potentially malicious content",
+            "description": "Configure transport rules to block common phishing and malware indicators",
+            "severity": "High",
+            "category": "Mail Flow",
+            "baseline": true
+        }
+    ]
+}
